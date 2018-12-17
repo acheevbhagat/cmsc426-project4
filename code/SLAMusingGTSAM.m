@@ -1,5 +1,5 @@
 function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSize, qIMUToC, TIMUToC,...
-                                                IMU, LeftImgs, TLeftImgs, Mode)
+                                                IMU, Mode)
     % For Input and Output specifications refer to the project pdf
 
     import gtsam.*
@@ -13,7 +13,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     file_pattern = fullfile(frames_folder, '*.jpg');
     frame_files = dir(file_pattern);
     frames = cell(length(frame_files));
-    for i = 1:length(frame_files)
+    for i = 1:1
         base_file_name = frame_files(i).name;
         full_file_name = fullfile(frames_folder, base_file_name);
         frame = imread(full_file_name);
@@ -21,9 +21,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     end
     
     % Load mapping data
-    mapping_data = load('DataMapping.mat');
-    frames_detections = mapping_data.DetAll;
-    frame_one_detections = frames_detections{1};
+    frame_one_detections = DetAll{1};
     
     % Detection data stores as [TagID, p1x, p1y, p2x, p2y, p3x, p3y, p4x, p4y]
     first_col = frame_one_detections(:, 1);
@@ -36,42 +34,47 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     p3y = tag_10_data(7);
     p4x = tag_10_data(8);
     p4y = tag_10_data(9);
-    tag_10_coords = [p1x, p1y; p2x, p2y; p3x, p3y; p4x, p4y];
-    world_origin = [0, 0; TagSize, 0; TagSize, TagSize; 0, TagSize];
+    tag_10_coords = [p1x p1y; p2x p2y; p3x p3y; p4x p4y];
+    world_origin = [0 0; TagSize 0; TagSize TagSize; 0 TagSize];
+%     tag_10_coords = [p1x, p2x, p3x, p4x; p1y, p2y, p3y, p4y; 1, 1, 1, 1];
+%     world_origin = [0, TagSize, TagSize, 0; 0, 0, TagSize, TagSize; 1, 1, 1, 1];
     
     % Initialize camera pose by calculating homography
-
+    tform = estimateGeometricTransform(tag_10_coords, world_origin, 'projective')
+    KH = tform.T;
+    H = K \ KH % Equivalent to H = inv(K) * KH
+    h_1 = H(:, 1);
+    h_2 = H(:, 2);
+    h_3 = H(:, 3);
+    % SVD on H to find the Rotation (R) and Translation (T) values
+    [U, S, V] = svd([h_1, h_2, cross(h_1, h_2)]);
+    R = U * S * V;
+    T = h_3 / norm(h_1);
+    pose = [R, T];
+%     [x, y] = transformPointsForward(H, p1x, p1y)
+%     KH = homography2d(tag_10_coords, world_origin)
+%     KH * [p4x; p4y; 1]
+    H_check = [];
+%     pose = [];
+%     hold on;
+%     for i = 1:size(frame_one_detections, 1)
+%         tag_data = frame_one_detections(i, :);
+%         p1x = tag_data(2);
+%         p1y = tag_data(3);
+%         p2x = tag_data(4);
+%         p2y = tag_data(5);
+%         p3x = tag_data(6);
+%         p3y = tag_data(7);
+%         p4x = tag_data(8);
+%         p4y = tag_data(9);
+%         tag_xs = [p1x p2x p3x p4x];
+%         tag_ys = [p1y p2y p3y p4y];
+%         [xs, ys] = transformPointsForward(tform, tag_xs', tag_ys');
+%         %H_check = [H_check; xs(1), ys(1), xs(2), ys(2), xs(3), ys(3), xs(4), ys(4)];\
+%         x = [xs(1) xs(2) xs(3) xs(4) xs(1)];
+%         y = [ys(1) ys(2) ys(3) ys(4) ys(1)];
+%         plot(x, y, 'b-', 'LineWidth', 2);
+%     end
+%     hold off;
+    
 end
-
-function H = homography2d(varargin)
-    
-    [x1, x2] = checkargs(varargin(:));
-
-    % Attempt to normalise each set of points so that the origin 
-    % is at centroid and mean distance from origin is sqrt(2).
-    [x1, T1] = normalise2dpts(x1);
-    [x2, T2] = normalise2dpts(x2);
-    
-    % Note that it may have not been possible to normalise
-    % the points if one was at infinity so the following does not
-    % assume that scale parameter w = 1.
-    
-    Npts = length(x1);
-    A = zeros(3*Npts,9);
-    
-    O = [0 0 0];
-    for n = 1:Npts
-	X = x1(:,n)';
-	x = x2(1,n); y = x2(2,n); w = x2(3,n);
-	A(3*n-2,:) = [  O  -w*X  y*X];
-	A(3*n-1,:) = [ w*X   O  -x*X];
-	A(3*n  ,:) = [-y*X  x*X   O ];
-    end
-    
-    [U,D,V] = svd(A,0); % 'Economy' decomposition for speed
-    
-    % Extract homography
-    H = reshape(V(:,9),3,3)';
-    
-    % Denormalise
-    H = T2\H*T1;

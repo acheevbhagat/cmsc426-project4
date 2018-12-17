@@ -7,6 +7,7 @@ clear all
 close all
 
 %% Add ToolBox to Path eg. ToolboxPath = 'gtsam_toolbox';
+ToolboxPath = '~/Documents/cmsc426/gtsam_toolbox'
 addpath(ToolboxPath);
 
 %% Load Data
@@ -17,4 +18,4 @@ load('CalibParams.mat');
 
 %% SLAM Using GTSAM
 [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSize, qIMUToC, TIMUToC,...
-                                                IMU, LeftImgs, TLeftImgs);
+                                                IMU);
