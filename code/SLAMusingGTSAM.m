@@ -55,6 +55,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
 %     KH = homography2d(tag_10_coords, world_origin)
 %     KH * [p4x; p4y; 1]
     H_check = [];
+    C = -R' * T
 %     pose = [];
 %     hold on;
 %     for i = 1:size(frame_one_detections, 1)
