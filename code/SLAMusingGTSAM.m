@@ -11,13 +11,13 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     
     graph = NonlinearFactorGraph;
     % Load frames containing April tags
-    frames_folder = '../MappingFrames/';
+    frames_folder = '../MappingFrames/MappingFrames/';
     file_pattern = fullfile(frames_folder, '*.jpg');
     frame_files = dir(file_pattern);
     numfiles = length(frame_files);
     frames = cell(numfiles);
     for i = 1:numfiles
-        frame = imread(frame_files(i).name);
+        frame = imread(fullfile(frames_folder, frame_files(i).name));
         frames{i} = frame;
     end
     
@@ -83,5 +83,10 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
             [cur_world_coords(2, :) cur_world_coords(2, 1)], 'b-', 'LineWidth', 2);
     end
     hold off;
+    
+    % Run through the images and update on each image
+    for i = 2:numfiles
+        
+    end
     
 end
