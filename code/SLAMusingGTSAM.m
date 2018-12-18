@@ -8,6 +8,8 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     % and the examples in the library in the GTSAM toolkit. See folder
     % gtsam_toolbox/gtsam_examples
 
+    
+    graph = NonlinearFactorGraph;
     % Load frames containing April tags
     frames_folder = '~/Documents/cmsc426/final_project/MappingFrames/';
     file_pattern = fullfile(frames_folder, '*.jpg');
