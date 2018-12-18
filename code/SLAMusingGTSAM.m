@@ -35,27 +35,29 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     p4x = tag_10_data(8);
     p4y = tag_10_data(9);
     tag_10_coords = [p1x p1y; p2x p2y; p3x p3y; p4x p4y];
-    world_origin = [0 0; TagSize 0; TagSize TagSize; 0 TagSize];
-%     tag_10_coords = [p1x, p2x, p3x, p4x; p1y, p2y, p3y, p4y; 1, 1, 1, 1];
-%     world_origin = [0, TagSize, TagSize, 0; 0, 0, TagSize, TagSize; 1, 1, 1, 1];
+    origin_coords = [0 0; TagSize 0; TagSize TagSize; 0 TagSize];
+%     tag_10_coords = [[p1x p2x 1]' [p2x p2y 1]' [p3x p3y 1]' [p4x p4y 1]'];
+%     origin_coords = [[0 0 1]' [TagSize 0 1]' [TagSize TagSize 1]' [0 TagSize 1]'];
     
     % Initialize camera pose by calculating homography
-    tform = estimateGeometricTransform(tag_10_coords, world_origin, 'projective')
+    tform = estimateGeometricTransform(tag_10_coords, origin_coords, 'projective')
     KH = tform.T;
+%     H = homography2d(inv(K) * tag_10_coords, origin_coords)
+%     H * tag_10_coords(:, 1)
     H = K \ KH % Equivalent to H = inv(K) * KH
-    h_1 = H(:, 1);
-    h_2 = H(:, 2);
-    h_3 = H(:, 3);
-    % SVD on H to find the Rotation (R) and Translation (T) values
-    [U, S, V] = svd([h_1, h_2, cross(h_1, h_2)]);
-    R = U * S * V;
-    T = h_3 / norm(h_1);
-    pose = [R, T];
-%     [x, y] = transformPointsForward(H, p1x, p1y)
-%     KH = homography2d(tag_10_coords, world_origin)
-%     KH * [p4x; p4y; 1]
-    H_check = [];
-    C = -R' * T
+    [x1, y1] = transformPointsForward(tform, p1x, p1y)
+    [x2, y2] = transformPointsForward(tform, p2x, p2y)
+    [x3, y3] = transformPointsForward(tform, p3x, p3y)
+    [x4, y4] = transformPointsForward(tform, p4x, p4y)
+    h_1 = H(:, 1)
+    h_2 = H(:, 2)
+    h_3 = H(:, 3)
+    % SVD on H to find the Rotation (R) and Translation (T) values for pose
+    [U, S, V] = svd([h_1 h_2 cross(h_1, h_2)]);
+    R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V'
+    T = h_3 / norm(h_1)
+    pose = [R T]
+    
 %     pose = [];
 %     hold on;
 %     for i = 1:size(frame_one_detections, 1)
