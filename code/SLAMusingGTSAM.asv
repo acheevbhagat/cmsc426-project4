@@ -15,9 +15,12 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     file_pattern = fullfile(frames_folder, '*.jpg');
     frame_files = dir(file_pattern);
     numfiles = length(frame_files);
-    frames = cell(numfiles);
-    for i = 1:numfiles
-        frame = imread(frame_files(i).name);
+    frames = cell(length(frame_files));
+
+    for i = 1:1
+        base_file_name = frame_files(i).name;
+        full_file_name = fullfile(frames_folder, base_file_name);
+        frame = imread(full_file_name);
         frames{i} = frame;
     end
     

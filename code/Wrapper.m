@@ -13,8 +13,8 @@ addpath(ToolboxPath);
 %% Load Data
 % Download data from the following link: 
 % https://drive.google.com/open?id=1ZFXZEv4yWgaVDE1JD6-oYL2KQDypnEUU
-load('DataMapping.mat');
-load('CalibParams.mat');
+load('../DataMappingNew.mat');
+load('../CalibParams.mat');
 
 %% SLAM Using GTSAM
 [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSize, qIMUToC, TIMUToC,...
