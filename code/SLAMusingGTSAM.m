@@ -45,39 +45,42 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
 %     H = homography2d(inv(K) * tag_10_coords, origin_coords)
 %     H * tag_10_coords(:, 1)
     H = K \ KH % Equivalent to H = inv(K) * KH
-    [x1, y1] = transformPointsForward(tform, p1x, p1y)
-    [x2, y2] = transformPointsForward(tform, p2x, p2y)
-    [x3, y3] = transformPointsForward(tform, p3x, p3y)
-    [x4, y4] = transformPointsForward(tform, p4x, p4y)
-    h_1 = H(:, 1)
-    h_2 = H(:, 2)
-    h_3 = H(:, 3)
+    [x1, y1] = transformPointsForward(tform, p1x, p1y);
+    [x2, y2] = transformPointsForward(tform, p2x, p2y);
+    [x3, y3] = transformPointsForward(tform, p3x, p3y);
+    [x4, y4] = transformPointsForward(tform, p4x, p4y);
+    h_1 = H(:, 1);
+    h_2 = H(:, 2);
+    h_3 = H(:, 3);
     % SVD on H to find the Rotation (R) and Translation (T) values for pose
     [U, S, V] = svd([h_1 h_2 cross(h_1, h_2)]);
-    R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V'
-    T = h_3 / norm(h_1)
+    R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V';
+    T = h_3 / norm(h_1);
     pose = [R T]
     
-%     pose = [];
-%     hold on;
-%     for i = 1:size(frame_one_detections, 1)
-%         tag_data = frame_one_detections(i, :);
-%         p1x = tag_data(2);
-%         p1y = tag_data(3);
-%         p2x = tag_data(4);
-%         p2y = tag_data(5);
-%         p3x = tag_data(6);
-%         p3y = tag_data(7);
-%         p4x = tag_data(8);
-%         p4y = tag_data(9);
-%         tag_xs = [p1x p2x p3x p4x];
-%         tag_ys = [p1y p2y p3y p4y];
-%         [xs, ys] = transformPointsForward(tform, tag_xs', tag_ys');
-%         %H_check = [H_check; xs(1), ys(1), xs(2), ys(2), xs(3), ys(3), xs(4), ys(4)];\
-%         x = [xs(1) xs(2) xs(3) xs(4) xs(1)];
-%         y = [ys(1) ys(2) ys(3) ys(4) ys(1)];
-%         plot(x, y, 'b-', 'LineWidth', 2);
-%     end
-%     hold off;
+    world_frame_coords = [10, 0, 0, TagSize, 0, TagSize, TagSize, 0, TagSize];
+    %imshow(frames{1});
+    hold on;
+    for i = 1:size(frame_one_detections, 1)
+        tag_data = frame_one_detections(i, :);
+        p1x = tag_data(2);
+        p1y = tag_data(3);
+        p2x = tag_data(4);
+        p2y = tag_data(5);
+        p3x = tag_data(6);
+        p3y = tag_data(7);
+        p4x = tag_data(8);
+        p4y = tag_data(9);
+        tag_xs = [p1x p2x p3x p4x];
+        tag_ys = [p1y p2y p3y p4y];
+        tag_coords = [tag_xs; tag_ys; 1 1 1 1];
+        cur_world_coords = inv(H) * tag_coords;
+        % Code to check homography accuracy
+        %[xs, ys] = transformPointsForward(tform, tag_xs', tag_ys');
+        %H_check = [H_check; xs(1), ys(1), xs(2), ys(2), xs(3), ys(3), xs(4), ys(4)];\
+        plot([cur_world_coords(1, :) cur_world_coords(1, 1)], ...
+            [cur_world_coords(2, :) cur_world_coords(2, 1)], 'b-', 'LineWidth', 2);
+    end
+    hold off;
     
 end
