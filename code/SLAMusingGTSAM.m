@@ -54,9 +54,9 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     [U, S, V] = svd([h_1 h_2 cross(h_1, h_2)]);
     R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V';
     T = h_3 / norm(h_1);
-    pose = [R T];
-    poses = [poses pose];
-    
+    pose = [R T]
+    quat = v_rotro2qr(R);
+    AllPosesComputed = [AllPosesComputed; T(1) T(2) T(3) quat(1) quat(2) quat(3) quat(4)];
     %world_frame_coords = [10, 0, 0, TagSize, 0, TagSize, TagSize, 0, TagSize];
     %imshow(frames{1});
     hold on;
@@ -74,27 +74,25 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         p4y = tag_data(9);
         tag_xs = [p1x p2x p3x p4x];
         tag_ys = [p1y p2y p3y p4y];
-        %tag_coords = [tag_xs; tag_ys; 1 1 1 1];
-        %cur_world_coords = inv(KH) * tag_coords;
         % Code to check homography accuracy
         [xs, ys] = transformPointsForward(tform, tag_xs', tag_ys');
-        %H_check = [H_check; xs(1), ys(1), xs(2), ys(2), xs(3), ys(3), xs(4), ys(4)];
         x = [xs(1) xs(2) xs(3) xs(4) xs(1)];
         y = [ys(1) ys(2) ys(3) ys(4) ys(1)];
         prev_world_coords = [prev_world_coords; tag_id xs(1) ys(1) xs(2) ys(2) xs(3) ys(3) xs(4) ys(4)];
-        %x = [cur_world_coords(1, :) cur_world_coords(1, 1)];
-        %y = [cur_world_coords(2, :) cur_world_coords(2, 1)];
-        plot(x, y, 'b-', 'LineWidth', 2);
+        %plot(x, y, 'b-', 'LineWidth', 2);
     end
+    hold off;
+    LandMarksComputed = [LandMarksComputed; prev_world_coords];
+    
     % Run through the images and update on each image
     homographies = cell(numfiles - 1, 1);
+    
     for f = 2:numfiles
         disp(f)
         % Find common landmarks between the frames
         currLandmarks = DetAll{f};
         prevLandmarks = prev_world_coords;
         commonTags = [];
-        landmarks = [landmarks currLandmarks];
         for j = 1:size(currLandmarks, 1)
             currLandmarkID = currLandmarks(j, 1);
             for k = 1:size(prevLandmarks, 1)
@@ -153,9 +151,8 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V';
         T = h_3 / norm(h_1);
         pose = [R T];
-        poses = [poses pose];
-        %tagCoords = currInfo';
-        %imagePoints = [currInfo(1, :); currInfo(2, :)]';
+        quat = v_rotro2qr(R);
+        AllPosesComputed = [AllPosesComputed; T(1) T(2) T(3) quat(1) quat(2) quat(3) quat(4)];
         %params = cameraParameters('IntrinsicMatrix', K');
         %currWorldCoords = inv(H) * tagCoords';
         %[orientation, location] = estimateWorldCameraPose(imagePoints, ...
@@ -181,15 +178,63 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
             x = [xs(1) xs(2) xs(3) xs(4) xs(1)];
             y = [ys(1) ys(2) ys(3) ys(4) ys(1)];
             prev_world_coords = [prev_world_coords; tag_id xs(1) ys(1) xs(2) ys(2) xs(3) ys(3) xs(4) ys(4)];
-            plot(x, y, 'b-', 'LineWidth', 2);
+            %plot(x, y, 'b-', 'LineWidth', 2);
         end
+        
+        for p = 1:size(prev_world_coords, 1)
+            if ~ismember(prev_world_coords(p, 1), LandMarksComputed(:, 1))
+                LandMarksComputed = [LandMarksComputed; prev_world_coords(p, :)];
+            end
+        end
+    end
+    
+    hold on;
+    % Plot landmarks
+%     for p = 1:size(LandMarksComputed, 1)
+%         tag_data = LandMarksComputed(p, :);
+%         p1x = tag_data(2);
+%         p1y = tag_data(3);
+%         p2x = tag_data(4);
+%         p2y = tag_data(5);
+%         p3x = tag_data(6);
+%         p3y = tag_data(7);
+%         p4x = tag_data(8);
+%         p4y = tag_data(9);
+%         tag_xs = [p1x p2x p3x p4x p1x];
+%         tag_ys = [p1y p2y p3y p4y p1y];
+%         plot(tag_xs, tag_ys, 'b-', 'LineWidth', 2);
+%     end
+%     
+%     % Plot pose
+%     for p = 1:size(AllPosesComputed, 1)
+%         pose_data = AllPosesComputed(p, :);
+%         x = pose_data(1);
+%         y = pose_data(2);
+%         plot(x, y, 'ro', 'LineWidth', 2);
+%     end
+
+    for p = 1:size(LandMarksComputed, 1)
+        tag_data = LandMarksComputed(p, :);
+        p1x = tag_data(2);
+        p2x = tag_data(4);
+        p3x = tag_data(6);
+        p4x = tag_data(8);
+        tag_xs = [p1x p2x p3x p4x p1x];
+        tag_zs = [1 1 1 1 1];
+        plot(tag_xs, tag_zs, 'b-', 'LineWidth', 2);
+    end
+    
+    % Plot pose
+    for p = 1:size(AllPosesComputed, 1)
+        pose_data = AllPosesComputed(p, :);
+        x = pose_data(1);
+        z = pose_data(3);
+       
+        plot(x, z, 'ro', 'LineWidth', 2);
     end
     hold off;
     
-    LandMarksComputed = unique(landmarks);
-    AllPosesComputed = poses;
-    
-     % Factor Graph Section
+    % Factor Graph Section
     x = cell(length(DetAll), 1);
     for f = 1:length(DetAll)
         x{f} = symbol('x', f);
@@ -199,15 +244,15 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     all_frames_landmarks = cell(length(DetAll), 1);
     for f = length(DetAll)
         cur_frame_landmarks = sortrows(frame_one_detections, 1);
-        l = cell(length(cur_frame_landmarks),1);
+        p = cell(length(cur_frame_landmarks),1);
         point_count = 0
         for f = 1:length(cur_frame_landmarks(:, 1))
             for j = 1:length(cur_frame_landmarks(f, 2:length(A)))
                 point_count = point_count + 1;
-                l{point_count} = symbol('lp', cur_frame_landmarks(point_count, 1));
+                p{point_count} = symbol('lp', cur_frame_landmarks(point_count, 1));
             end
         end
-        all_frames_landmarks{f} = l;
+        all_frames_landmarks{f} = p;
     end
 
     graph = NonlinearFactorGraph;
