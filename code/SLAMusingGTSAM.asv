@@ -10,6 +10,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
 
     
     graph = NonlinearFactorGraph;
+    poses = []
     % Load frames containing April tags
     frames_folder = '../MappingFrames/MappingFrames/';
     file_pattern = fullfile(frames_folder, '*.jpg');
@@ -58,6 +59,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V';
     T = h_3 / norm(h_1);
     pose = [R T]
+    poses = [poses pose]
     
     world_frame_coords = [10, 0, 0, TagSize, 0, TagSize, TagSize, 0, TagSize];
     %imshow(frames{1});
@@ -85,9 +87,18 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     hold off;
     
     % Run through the images and update on each image
-    for i = 1:numfiles
-       currPose = pose;
-       
+    for i = 2:numfiles
+        % Find common landmarks between the frames
+        currLandmarks = DetAll{i};
+        prevLandmarks = DetAll{i - 1};
+        commonTags = [];
+        for j = 1:size(currLandmarks, 1)
+            currLandmarkID = currLandmarks(j, 1);
+            for k = 1:size(prevLandmarks, 1)
+                prevLandmarkID = prevLandmarks(k, 1);
+                
+            end
+        end
     end
     
 end
