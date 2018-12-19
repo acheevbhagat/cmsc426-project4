@@ -104,16 +104,43 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         end
         % Calculate homography between all sets of landmarks
         % Pull out landmark information for each landmark
-        currInfo = [];
-        prevInfo = [];
+        currInfoX = [];
+        currInfoY = [];
+        prevInfoX = [];
+        prevInfoY = [];
         currFirstCol = currLandmarks(:, 1);
         prevFirstCol = prevLandmarks(:, 1);
         for j = 1:length(commonTags)
-            currInfoVec = currLandmarks(currFirstCol == commonTags(i), :);
-            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(i), :);
-            currInfo = [currInfo; currInfoVec];
-            prevInfo = [prevInfo; prevInfoVec];
+            currInfoVec = currLandmarks(currFirstCol == commonTags(i), :)';
+            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(i), :)';
+            % First column X values
+            currInfoX = [currInfoX currInfoVec(2) currInfoVec(4) ...
+                currInfoVec(6) currInfoVec(8)];
+            prevInfoX = [prevInfoX prevInfoVec(2) prevInfoVec(4) ...
+                prevInfoVec(6) prevInfoVec(8)];
+            % Second column Y values
+            currInfoY = [currInfoY currInfoVec(3) currInfoVec(5) ...
+                currInfoVec(7) currInfoVec(9)];
+            prevInfoY = [prevInfoY prevInfoVec(3) prevInfoVec(5) ...
+                prevInfoVec(7) prevInfoVec(9)];
         end
+        % Shape the data to a 3 x N for homography2d
+        % Make third row of ones
+        onesRow = ones([1 size(currInfoX, 2)]);
+        [m, n] = size(currInfoX)
+        [m, n] = size(currInfoY)
+        [m, n] = size(onesRow)
+        currInfo = [   ...
+            currInfoX; ...
+            currInfoY; ...
+            onesRow    ...
+            ];
+        prevInfo = [   ...
+            prevInfoX; ...
+            prevInfoY; ...
+            onesRow    ...
+            ];
+        newH = homography2d(currInfo, prevInfo)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % TODO Calculate Homography here %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
