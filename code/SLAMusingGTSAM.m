@@ -10,7 +10,9 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
 
     
     graph = NonlinearFactorGraph;
-    poses = []
+    poses = [];
+    landmarks = {};
+    
     % Load frames containing April tags
     frames_folder = '../MappingFrames/MappingFrames/';
     file_pattern = fullfile(frames_folder, '*.jpg');
@@ -24,6 +26,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     
     % Load mapping data
     frame_one_detections = DetAll{1};
+    landmarks = [landmarks frame_one_detections];
     
     % Detection data stores as [TagID, p1x, p1y, p2x, p2y, p3x, p3y, p4x, p4y]
     first_col = frame_one_detections(:, 1);
@@ -92,6 +95,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         currLandmarks = DetAll{i};
         prevLandmarks = DetAll{i - 1};
         commonTags = [];
+        landmarks = [landmarks currLandmarks];
         for j = 1:size(currLandmarks, 1)
             currLandmarkID = currLandmarks(j, 1);
             for k = 1:size(prevLandmarks, 1)
@@ -143,9 +147,10 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         params = cameraParameters('IntrinsicMatrix', K');
         currWorldCoords = inv(H) * tagCoords';
         [orientation, location] = estimateWorldCameraPose(imagePoints, ...
-            currWorldCoords', params)
+            currWorldCoords', params);
         pose = [orientation location'];
         poses = [poses pose];
     end
+    LandMarksComputed = unique(landmarks);
     AllPosesComputed = poses;
 end
