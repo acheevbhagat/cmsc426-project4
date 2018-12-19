@@ -102,6 +102,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
                 end
             end
         end
+        % Calculate homography between all sets of landmarks
         
     end
     

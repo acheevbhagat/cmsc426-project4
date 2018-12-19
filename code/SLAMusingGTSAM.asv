@@ -96,9 +96,14 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
             currLandmarkID = currLandmarks(j, 1);
             for k = 1:size(prevLandmarks, 1)
                 prevLandmarkID = prevLandmarks(k, 1);
-                
+                if currLandmarkID == prevLandmarkID
+                    commonTags = [commonTags currLandmarkID];
+                    break;
+                end
             end
         end
+        % Calculate homography between all sets of landmarks
+        
     end
     
 end
