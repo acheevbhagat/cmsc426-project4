@@ -103,6 +103,20 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
             end
         end
         % Calculate homography between all sets of landmarks
+        % Pull out landmark information for each landmark
+        currInfo = [];
+        prevInfo = [];
+        currFirstCol = currLandMarks(:, 1);
+        prevFirstCol = prevLandMarks(:, 1);
+        for j = 1:length(commonTags);
+            currInfoVec = currLandMarks(currFirstCol == commonTags(i), :);
+            prevInfoVec = prevLandMarks(prevFirstCol == commonTags(i), :);
+            currInfo = [currInfo; currInfoVec];
+            prevInfo = [prevInfo; prevInfoVec];
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % TODO Calculate Homography here %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
     end
     
