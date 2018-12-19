@@ -106,11 +106,11 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         % Pull out landmark information for each landmark
         currInfo = [];
         prevInfo = [];
-        currFirstCol = currLandMarks(:, 1);
-        prevFirstCol = prevLandMarks(:, 1);
+        currFirstCol = currLandmarks(:, 1);
+        prevFirstCol = prevLandmarks(:, 1);
         for j = 1:length(commonTags);
-            currInfoVec = currLandMarks(currFirstCol == commonTags(i), :);
-            prevInfoVec = prevLandMarks(prevFirstCol == commonTags(i), :);
+            currInfoVec = currLandmarks(currFirstCol == commonTags(i), :);
+            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(i), :);
             currInfo = [currInfo; currInfoVec];
             prevInfo = [prevInfo; prevInfoVec];
         end
