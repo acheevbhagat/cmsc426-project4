@@ -111,8 +111,8 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         currFirstCol = currLandmarks(:, 1);
         prevFirstCol = prevLandmarks(:, 1);
         for j = 1:length(commonTags)
-            currInfoVec = currLandmarks(currFirstCol == commonTags(i), :)';
-            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(i), :)';
+            currInfoVec = currLandmarks(currFirstCol == commonTags(j), :)';
+            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(j), :)';
             % First column X values
             currInfoX = [currInfoX currInfoVec(2) currInfoVec(4) ...
                 currInfoVec(6) currInfoVec(8)];
@@ -126,10 +126,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         end
         % Shape the data to a 3 x N for homography2d
         % Make third row of ones
-        onesRow = ones([1 size(currInfoX, 2)]);
-        [m, n] = size(currInfoX)
-        [m, n] = size(currInfoY)
-        [m, n] = size(onesRow)
+        onesRow = ones([1 size(currInfoX, 2)]) / size(currInfoX, 2);
         currInfo = [   ...
             currInfoX; ...
             currInfoY; ...
@@ -140,11 +137,15 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
             prevInfoY; ...
             onesRow    ...
             ];
-        newH = homography2d(currInfo, prevInfo)
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % TODO Calculate Homography here %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+        H = homography2d(currInfo, prevInfo);
+        tagCoords = currInfo';
+        imagePoints = [currInfo(1, :); currInfo(2, :)]';
+        params = cameraParameters('IntrinsicMatrix', K');
+        currWorldCoords = inv(H) * tagCoords';
+        [orientation, location] = estimateWorldCameraPose(imagePoints, ...
+            currWorldCoords', params)
+        pose = [orientation location'];
+        poses = [poses pose];
     end
-    
+    AllPosesComputed = poses;
 end

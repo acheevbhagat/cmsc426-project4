@@ -11,6 +11,7 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
     
     graph = NonlinearFactorGraph;
     poses = []
+    params = load("../CalibParams.mat
     % Load frames containing April tags
     frames_folder = '../MappingFrames/MappingFrames/';
     file_pattern = fullfile(frames_folder, '*.jpg');
@@ -111,29 +112,45 @@ function [LandMarksComputed, AllPosesComputed] = SLAMusingGTSAM(DetAll, K, TagSi
         currFirstCol = currLandmarks(:, 1);
         prevFirstCol = prevLandmarks(:, 1);
         for j = 1:length(commonTags)
-            currInfoVec = currLandmarks(currFirstCol == commonTags(i), :);
-            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(i), :);
+            currInfoVec = currLandmarks(currFirstCol == commonTags(j), :)';
+            prevInfoVec = prevLandmarks(prevFirstCol == commonTags(j), :)';
             % First column X values
-            currInfoX = [currInfoX currInfoVec(2) currInfoVec(4)
+            currInfoX = [currInfoX currInfoVec(2) currInfoVec(4) ...
                 currInfoVec(6) currInfoVec(8)];
-            prevInfoX = [prevInfoX prevInfoVec(2) prevInfoVec(4)
+            prevInfoX = [prevInfoX prevInfoVec(2) prevInfoVec(4) ...
                 prevInfoVec(6) prevInfoVec(8)];
             % Second column Y values
-            currInfoY = [currInfoY currInfoVec(3) currInfoVec(5)
+            currInfoY = [currInfoY currInfoVec(3) currInfoVec(5) ...
                 currInfoVec(7) currInfoVec(9)];
-            prevInfoY = [prevInfoY prevInfoVec(3) prevInfoVec(5)
-                prevInfoVec(7) prevInfo(9)];
+            prevInfoY = [prevInfoY prevInfoVec(3) prevInfoVec(5) ...
+                prevInfoVec(7) prevInfoVec(9)];
         end
         % Shape the data to a 3 x N for homography2d
-        % Make 
-        thirdR
-        for j = 1:length(commonTags)
-            
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % TODO Calculate Homography here %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+        % Make third row of ones
+        onesRow = ones([1 size(currInfoX, 2)]) / size(currInfoX, 2);
+        currInfo = [   ...
+            currInfoX; ...
+            currInfoY; ...
+            onesRow    ...
+            ];
+        prevInfo = [   ...
+            prevInfoX; ...
+            prevInfoY; ...
+            onesRow    ...
+            ];
+        H = homography2d(currInfo, prevInfo)
+        %{
+        h_1 = H(:, 1);
+        h_2 = H(:, 2);
+        h_3 = H(:, 3);
+        [U, S, V] = svd([h_1 h_2 cross(h_1, h_2)]);
+        R = U * [1 0 0; 0 1 0; 0 0 det(U * V')] * V';
+        T = h_3 / norm(h_1);
+        %}
+        tagCoords = currInfo;
+        currWorldCoords = inv(H) * tagCoords;
+        [orientation, location] = estimateWorldCameraPose(currInfo, ...
+            currWorldCoords, calib);
     end
     
 end
